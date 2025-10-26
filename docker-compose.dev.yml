@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     env_file:
-      - ./.env
+      - ./.env.development
     secrets:
       - EMAIL_PASSWORD
       - JWT_SECRET
