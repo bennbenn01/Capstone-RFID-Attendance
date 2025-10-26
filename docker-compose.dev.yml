@@ -1,0 +1,9 @@
+# Dev-only services
+services:
+  cap_adminer:
+    image: adminer:standalone
+    restart: always
+    environment:
+      ADMINER_DEFAULT_SERVER: cap_database
+    ports:
+      - "8080:8080"

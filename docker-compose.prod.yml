@@ -1,0 +1,83 @@
+services:
+  cap_backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ./.env
+    secrets:
+      - EMAIL_PASSWORD
+      - JWT_SECRET
+      - COOKIE_SECRET
+    depends_on:
+      - cap_database
+      - cap_elasticsearch
+    networks:
+      - capstone-project
+    user: "${UID}:${GID}"
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./ssl:/app/ssl:ro
+    command: sh -c "npx prisma migrate deploy && node index.js"
+
+  cap_database:
+    image: mysql:8.0.36
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_USER_PASSWORD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PASSWORD
+    secrets:
+      - DB_ROOT_PASSWORD
+      - DB_USER_PASSWORD
+    volumes:
+      - mysql-database:/var/lib/mysql:rw
+    networks:
+      - capstone-project
+
+  cap_elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.1.5
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.transport.ssl.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - bootstrap.memory_lock=true
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    volumes:
+      - elastic-data:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - capstone-project
+
+secrets:
+  EMAIL_PASSWORD:
+    file: ./secrets/EMAIL_PASSWORD.txt
+  JWT_SECRET:
+    file: ./secrets/JWT_SECRET.txt
+  COOKIE_SECRET:
+    file: ./secrets/COOKIE_SECRET.txt
+  DB_ROOT_PASSWORD:
+    file: ./secrets/DB_ROOT_PASSWORD.txt
+  DB_USER_PASSWORD:
+    file: ./secrets/DB_USER_PASSWORD.txt
+
+networks:
+  capstone-project:
+    driver: bridge
+
+volumes:
+  mysql-database:
+  elastic-data:

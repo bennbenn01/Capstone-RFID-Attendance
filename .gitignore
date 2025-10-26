@@ -1,0 +1,11 @@
+.env.*
+
+.DS_Store
+Backend/
+Frontend/
+Data/
+ino/
+
+dump.txt
+ssl/
+secrets/
